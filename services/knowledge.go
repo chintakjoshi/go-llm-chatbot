@@ -49,7 +49,7 @@ func GetPersonalInfo() PersonalInfo {
 		Links: map[string]string{
 			"LinkedIn":  "https://www.linkedin.com/in/chintakjoshi",
 			"GitHub":    "https://github.com/chintakjoshi",
-			"Portfolio": "https://chintakjoshi.github.io",
+			"Portfolio": "https://chintakjoshi.github.io/chintakjoshi/",
 		},
 		ContactInfo: "To reach out to me, please fill out the contact form on my portfolio. I will reply as soon as possible. Thank you!",
 	}
@@ -68,8 +68,8 @@ func GetProjects() []Project {
 				"Responsive design with modern UI",
 			},
 			Links: map[string]string{
-				"Live Demo":   "Click Live button in portfolio",
-				"Source Code": "Click GitHub in portfolio",
+				"Live Demo":   "https://ispraak.net/",
+				"Source Code": "https://github.com/dnickol1/ispraak_open/",
 			},
 			Category: "Academic/Personal",
 		},
@@ -83,8 +83,8 @@ func GetProjects() []Project {
 				"Promotes clean virtual universe concept",
 			},
 			Links: map[string]string{
-				"Play Game":   "Click play button in portfolio",
-				"Source Code": "Click GitHub in portfolio",
+				"Play Game":   "https://rolling-ball-three-js-chintak-joshis-projects.vercel.app/",
+				"Source Code": "https://github.com/chintakjoshi/rolling-ball-three.js",
 			},
 			Category: "Personal",
 		},
@@ -98,7 +98,7 @@ func GetProjects() []Project {
 				"Spring Boot backend with React frontend",
 			},
 			Links: map[string]string{
-				"Source Code": "Click GitHub in portfolio",
+				"Source Code": "https://github.com/chintakjoshi/authapp",
 			},
 			Category: "Academic",
 		},
@@ -112,7 +112,7 @@ func GetProjects() []Project {
 				"Open source project for St. Louis community",
 			},
 			Links: map[string]string{
-				"Source Code": "Click GitHub in portfolio",
+				"Source Code": "https://github.com/chintakjoshi/TWA-OSS",
 			},
 			Category: "Open Source",
 		},
@@ -126,7 +126,7 @@ func GetProjects() []Project {
 				"Team leadership role",
 			},
 			Links: map[string]string{
-				"Source Code": "Click GitHub in portfolio",
+				"Source Code": "https://github.com/chintakjoshi/onlinestore",
 			},
 			Category: "Academic",
 		},
@@ -140,7 +140,7 @@ func GetProjects() []Project {
 				"QR code for identity verification",
 			},
 			Links: map[string]string{
-				"Source Code": "Click GitHub in portfolio",
+				"Source Code": "https://github.com/chintakjoshi/QR-project",
 			},
 			Category: "Academic",
 		},

@@ -23,7 +23,7 @@ func NewOpenRouterProvider(apiKey, endpoint, model string) *OpenRouterProvider {
 		endpoint: endpoint,
 		model:    model,
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 60 * time.Second,
 		},
 	}
 }
@@ -50,8 +50,8 @@ func (o *OpenRouterProvider) GetChatCompletion(ctx context.Context, req ChatComp
 	baseReq := BaseRequest{
 		Model:       o.model,
 		Messages:    messages,
-		MaxTokens:   350,
-		Temperature: 0.2,
+		MaxTokens:   5000,
+		Temperature: 0.3,
 		TopP:        0.7,
 		Stream:      false,
 	}

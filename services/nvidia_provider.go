@@ -23,7 +23,7 @@ func NewNvidiaProvider(apiKey, endpoint, model string) *NvidiaProvider {
 		endpoint: endpoint,
 		model:    model,
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 60 * time.Second,
 		},
 	}
 }
@@ -50,8 +50,8 @@ func (n *NvidiaProvider) GetChatCompletion(ctx context.Context, req ChatCompleti
 	baseReq := BaseRequest{
 		Model:       n.model,
 		Messages:    messages,
-		MaxTokens:   350,
-		Temperature: 0.2,
+		MaxTokens:   5000,
+		Temperature: 0.3,
 		TopP:        0.7,
 		Stream:      false,
 	}
