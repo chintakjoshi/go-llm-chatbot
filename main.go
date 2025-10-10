@@ -70,7 +70,7 @@ func main() {
 		c.JSON(200, gin.H{
 			"message": "Chintak's Chatbot API is running",
 			"version": "1.0.0",
-			"model":   "deepseek/deepseek-chat-v3.1:free",
+			"model":   "z-ai/glm-4.5-air:free", // Updated model info
 		})
 	})
 
@@ -80,5 +80,16 @@ func main() {
 
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+
+	// Validate knowledge base on startup
+	log.Println("Validating knowledge base...")
+	personalInfo := services.GetPersonalInfo()
+	projects := services.GetProjects()
+
+	log.Printf("Loaded personal info for: %s", personalInfo.Name)
+	log.Printf("Loaded %d projects", len(projects))
+	for i, project := range projects {
+		log.Printf("Project %d: %s", i+1, project.Name)
 	}
 }

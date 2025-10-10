@@ -1,49 +1,127 @@
 package services
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
-// GetContextPrompt returns the system prompt that defines Chintak's persona
+// GetContextPrompt returns the system prompt with structured knowledge
 func GetContextPrompt() string {
-	return `You are Chintak Joshi, a passionate software developer and technology enthusiast. 
-You have experience in full-stack development, cloud technologies, and modern web frameworks.
+	personalInfo := GetPersonalInfo()
+	projects := GetProjects()
 
-About you:
-- You're passionate about creating efficient, scalable solutions
-- You have experience with React, Node.js, Go, Python, and various databases
-- You enjoy learning new technologies and solving complex problems
-- You're currently working on personal projects and open to new opportunities
+	// Build projects section
+	projectsSection := "MY PROJECTS (ONLY DISCUSS THESE):\n\n"
+	for i, project := range projects {
+		projectsSection += fmt.Sprintf("%d. %s\n", i+1, project.Name)
+		projectsSection += fmt.Sprintf("   Description: %s\n", project.Description)
+		projectsSection += fmt.Sprintf("   Technologies: %s\n", strings.Join(project.Technologies, ", "))
+		projectsSection += fmt.Sprintf("   Features: %s\n", strings.Join(project.Features, "; "))
+		projectsSection += fmt.Sprintf("   Category: %s\n", project.Category)
+		if len(project.Links) > 0 {
+			for linkType, link := range project.Links {
+				projectsSection += fmt.Sprintf("   %s: %s\n", linkType, link)
+			}
+		}
+		projectsSection += "\n"
+	}
 
-Your personality:
-- Friendly, professional, and enthusiastic about technology
-- Clear and concise in explanations
-- Happy to share your knowledge and experience
-- Authentic and genuine in your responses
+	// Build skills section
+	skillsSection := "MY SKILLS:\n"
+	for category, skills := range personalInfo.Skills {
+		skillsSection += fmt.Sprintf("- %s: %s\n", category, strings.Join(skills, ", "))
+	}
 
-When people ask about you:
-- Share your genuine experiences and interests
-- Be helpful and provide useful information about your skills and projects
-- Keep responses conversational but informative (2-3 paragraphs maximum)
-- If you don't know something, be honest about it
+	// Build education section
+	educationSection := "EDUCATION:\n"
+	for _, edu := range personalInfo.Education {
+		educationSection += fmt.Sprintf("- %s\n", edu)
+	}
 
-Important: Always stay in character as Chintak Joshi. Do not break character or reveal that you're an AI model. Respond as if you are actually Chintak having a conversation.`
+	// Build achievements section
+	achievementsSection := "ACHIEVEMENTS:\n"
+	for _, achievement := range personalInfo.Achievements {
+		achievementsSection += fmt.Sprintf("- %s\n", achievement)
+	}
+
+	// Build links section
+	linksSection := "LINKS:\n"
+	for platform, url := range personalInfo.Links {
+		linksSection += fmt.Sprintf("- %s: %s\n", platform, url)
+	}
+
+	return `You are Chintak Joshi. You MUST follow these rules STRICTLY:
+
+CRITICAL RULES:
+1. ONLY use the information provided below - NEVER invent anything
+2. If asked about something not listed, respond with: "I don't have that information in my portfolio"
+3. Never reveal you are an AI model - you are Chintak Joshi
+4. Keep responses concise (under 400 characters)
+5. Use bullet points and short sentences when appropriate
+6. Never share API keys, passwords, or sensitive information
+7. If someone asks for code implementation, direct them to your GitHub portfolio
+8. When discussing projects, always mention they can find live demos and source code in your portfolio
+
+ABOUT ME:
+- Name: ` + personalInfo.Name + `
+- Title: ` + personalInfo.Title + `
+- Experience: ` + personalInfo.Experience + `
+- Current Role: ` + personalInfo.CurrentRole + `
+- Personality: Friendly, professional, enthusiastic about technology
+
+` + educationSection + `
+` + achievementsSection + `
+` + skillsSection + `
+` + projectsSection + `
+` + linksSection + `
+CONTACT: ` + personalInfo.ContactInfo + `
+
+RESPONSE GUIDELINES:
+- Be authentic and genuine
+- Share knowledge and experience willingly
+- Keep explanations clear and concise
+- Redirect to portfolio for detailed project information
+- Stay in character as Chintak Joshi at all times`
 }
 
-// EnhanceUserMessage adds context to user messages when needed
+// EnhanceUserMessage adds strict context to prevent hallucinations
 func EnhanceUserMessage(userMessage string) string {
 	message := strings.ToLower(userMessage)
 
-	// Add context for common questions
-	if strings.Contains(message, "who are you") || strings.Contains(message, "what do you do") {
-		return userMessage + " (Please respond as Chintak Joshi)"
+	// Add strict context for different types of questions
+	if containsAny(message, []string{"project", "built", "created", "developed", "portfolio"}) {
+		return userMessage + " [STRICT: ONLY discuss projects listed in my knowledge base. Do not invent any projects.]"
 	}
 
-	if strings.Contains(message, "experience") || strings.Contains(message, "skills") {
-		return userMessage + " - answer as Chintak with specific technologies and projects"
+	if containsAny(message, []string{"experience", "skill", "technology", "framework", "language"}) {
+		return userMessage + " [STRICT: ONLY discuss skills and technologies listed in my knowledge base.]"
 	}
 
-	if strings.Contains(message, "project") || strings.Contains(message, "portfolio") {
-		return userMessage + " - describe your actual projects and technologies used"
+	if containsAny(message, []string{"who are you", "what do you do", "tell me about yourself"}) {
+		return userMessage + " [STRICT: Respond as Chintak Joshi using only the information in my knowledge base.]"
 	}
 
-	return userMessage
+	if containsAny(message, []string{"education", "degree", "university", "college"}) {
+		return userMessage + " [STRICT: ONLY discuss educational background listed in my knowledge base.]"
+	}
+
+	if containsAny(message, []string{"achievement", "accomplishment", "award"}) {
+		return userMessage + " [STRICT: ONLY discuss achievements listed in my knowledge base.]"
+	}
+
+	if containsAny(message, []string{"contact", "email", "reach", "linkedin", "github"}) {
+		return userMessage + " [STRICT: Direct to portfolio contact form or use provided links.]"
+	}
+
+	return userMessage + " [STRICT: Only use information from my knowledge base. Do not invent anything.]"
+}
+
+// containsAny checks if a string contains any of the given substrings
+func containsAny(s string, substrings []string) bool {
+	for _, substr := range substrings {
+		if strings.Contains(s, substr) {
+			return true
+		}
+	}
+	return false
 }

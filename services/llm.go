@@ -84,11 +84,11 @@ func (s *LLMService) GetChatCompletion(ctx context.Context, req ChatCompletionRe
 	}
 
 	openRouterReq := OpenRouterRequest{
-		Model:       "deepseek/deepseek-chat-v3.1:free",
+		Model:       "z-ai/glm-4.5-air:free", // Changed model
 		Messages:    messages,
-		MaxTokens:   500,
-		Temperature: 0.7,
-		TopP:        1,
+		MaxTokens:   5000, // Further reduced to prevent long responses
+		Temperature: 0.2,  // Much lower for more deterministic responses
+		TopP:        0.7,  // Adjusted for better response quality
 	}
 
 	requestBody, err := json.Marshal(openRouterReq)
