@@ -1,5 +1,5 @@
 
-# Chintak Joshi Portfolio Chatbot - Configuration & Testing Guide
+# Chintak's Portfolio Chatbot - Configuration & Testing Guide
 
 ## 📋 Project Overview
 This project consists of two main components:
@@ -36,8 +36,8 @@ NVIDIA_ENDPOINT=https://integrate.api.nvidia.com/v1/chat/completions
 OPENROUTER_ENDPOINT=https://openrouter.ai/api/v1/chat/completions
 
 # LLM Models
-NVIDIA_MODEL=deepseek-ai/deepseek-v3.1-terminus
-OPENROUTER_MODEL=deepseek/deepseek-chat-v3.1:free
+NVIDIA_MODEL=nvidia/nvidia-nemotron-nano-9b-v2
+OPENROUTER_MODEL=z-ai/glm-4.5-air:free
 
 # Logging
 LOG_LEVEL=INFO
