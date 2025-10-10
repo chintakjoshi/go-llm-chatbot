@@ -32,3 +32,5 @@ go.work.sum
 # .vscode/
 
 chatbot-server.exe
+logs/
+logs/backend.log
