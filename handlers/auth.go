@@ -5,6 +5,7 @@ import (
 
 	"chintak-chatbot/middleware"
 	"chintak-chatbot/models"
+	"chintak-chatbot/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,8 +23,11 @@ func NewAuthHandler(authMiddleware *middleware.AuthMiddleware, validAPIKey strin
 }
 
 func (h *AuthHandler) Authenticate(c *gin.Context) {
+	clientIP := c.ClientIP()
+
 	var req models.AuthRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.Warn("Invalid auth request from %s: %v", clientIP, err)
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: "Invalid request body",
 		})
@@ -31,7 +35,6 @@ func (h *AuthHandler) Authenticate(c *gin.Context) {
 	}
 
 	// For now, we'll use a simple API key validation
-	// In production, you might want a more secure approach
 	expectedAPIKey := h.validAPIKey
 	if expectedAPIKey == "" {
 		// Fallback for development
@@ -39,6 +42,8 @@ func (h *AuthHandler) Authenticate(c *gin.Context) {
 	}
 
 	if req.APIKey != expectedAPIKey {
+		utils.Warn("Failed authentication attempt from %s - Invalid API key", clientIP)
+		utils.LogAuthAttempt(clientIP, false)
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Error: "Invalid API key",
 		})
@@ -48,11 +53,15 @@ func (h *AuthHandler) Authenticate(c *gin.Context) {
 	// Generate JWT token
 	token, err := h.authMiddleware.GenerateToken(req.APIKey)
 	if err != nil {
+		utils.Error("Failed to generate token for %s: %v", clientIP, err)
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error: "Failed to generate token",
 		})
 		return
 	}
+
+	utils.Info("Successful authentication from %s", clientIP)
+	utils.LogAuthAttempt(clientIP, true)
 
 	c.JSON(http.StatusOK, models.AuthResponse{
 		Token:     token,
@@ -60,20 +69,22 @@ func (h *AuthHandler) Authenticate(c *gin.Context) {
 	})
 }
 
-// SimpleAuth is a simpler version that doesn't require request body
 func (h *AuthHandler) SimpleAuth(c *gin.Context) {
-	// For GitHub Pages, we might want a simpler approach
-	// This generates a token without requiring an API key in request body
+	clientIP := c.ClientIP()
 
 	apiKey := "portfolio-chatbot-key" // You can change this
 
 	token, err := h.authMiddleware.GenerateToken(apiKey)
 	if err != nil {
+		utils.Error("Failed to generate simple auth token for %s: %v", clientIP, err)
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error: "Failed to generate token",
 		})
 		return
 	}
+
+	utils.Info("Successful simple authentication from %s", clientIP)
+	utils.LogAuthAttempt(clientIP, true)
 
 	c.JSON(http.StatusOK, models.AuthResponse{
 		Token:     token,
