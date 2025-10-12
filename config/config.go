@@ -29,39 +29,41 @@ func Load() *Config {
 	}
 
 	return &Config{
-		Port:               getEnv("PORT", "8080"),
-		NvidiaAPIKey:       getEnv("NVIDIA_API_KEY", ""),
-		OpenRouterKey:      getEnv("OPENROUTER_API_KEY", ""),
-		JWTSecret:          getEnv("JWT_SECRET", "your-super-secret-jwt-key-change-in-production"),
-		AllowedOrigins:     getEnvSlice("ALLOWED_ORIGINS", []string{"https://chintakjoshi.github.io", "http://localhost:3000"}),
-		RateLimit:          getEnvInt("RATE_LIMIT", 10),
-		RateLimitWindow:    getEnvInt("RATE_LIMIT_WINDOW", 60),
-		NvidiaEndpoint:     getEnv("NVIDIA_ENDPOINT", "https://integrate.api.nvidia.com/v1/chat/completions"),
-		OpenRouterEndpoint: getEnv("OPENROUTER_ENDPOINT", "https://openrouter.ai/api/v1/chat/completions"),
-		NvidiaModel:        getEnv("NVIDIA_MODEL", "deepseek-ai/deepseek-v3.1-terminus"),
-		OpenRouterModel:    getEnv("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3.1:free"),
+		Port:               mustGetEnv("PORT"),
+		NvidiaAPIKey:       mustGetEnv("NVIDIA_API_KEY"),
+		OpenRouterKey:      mustGetEnv("OPENROUTER_API_KEY"),
+		JWTSecret:          mustGetEnv("JWT_SECRET"),
+		AllowedOrigins:     mustGetEnvSlice("ALLOWED_ORIGINS"),
+		RateLimit:          getEnvIntWithDefault("RATE_LIMIT", 10),
+		RateLimitWindow:    getEnvIntWithDefault("RATE_LIMIT_WINDOW", 60),
+		NvidiaEndpoint:     mustGetEnv("NVIDIA_ENDPOINT"),
+		OpenRouterEndpoint: mustGetEnv("OPENROUTER_ENDPOINT"),
+		NvidiaModel:        mustGetEnv("NVIDIA_MODEL"),
+		OpenRouterModel:    mustGetEnv("OPENROUTER_MODEL"),
 	}
 }
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+func mustGetEnv(key string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		log.Fatalf("Missing required environment variable: %s", key)
 	}
-	return defaultValue
+	return val
 }
 
-func getEnvInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
+func mustGetEnvSlice(key string) []string {
+	val := mustGetEnv(key)
+	return strings.Split(val, ",")
 }
 
-func getEnvSlice(key string, defaultValue []string) []string {
-	if value := os.Getenv(key); value != "" {
-		return strings.Split(value, ",")
+func getEnvIntWithDefault(key string, defaultValue int) int {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultValue
 	}
-	return defaultValue
+	num, err := strconv.Atoi(val)
+	if err != nil {
+		log.Fatalf("Invalid value for %s: %s (must be an integer)", key, val)
+	}
+	return num
 }
