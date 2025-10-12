@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/chintakjoshi/chintak-chatbot/config"
@@ -43,7 +44,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authMiddleware, cfg.NvidiaAPIKey)
 	chatHandler := handlers.NewChatHandler(llmService)
 
-	// Create Gin router
+	// Set Gin mode based on environment
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 		utils.Info("Running in release mode")
@@ -51,12 +52,23 @@ func main() {
 		utils.Info("Running in debug mode")
 	}
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
-	// Middleware
+	// Set trusted proxies to avoid warnings
+	if err := router.SetTrustedProxies(nil); err != nil {
+		utils.Fatal("Failed to set trusted proxies: %v", err)
+	}
+
+	// CORS middleware (can override via env ALLOWED_ORIGINS)
+	envOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if envOrigins != "" {
+		cfg.AllowedOrigins = strings.Split(envOrigins, ",")
+	}
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
 	router.Use(middleware.RateLimitMiddleware())
-	router.Use(middleware.LoggingMiddleware()) // Add logging middleware
+	router.Use(middleware.LoggingMiddleware())
 
 	// Routes
 	api := router.Group("/api/v1")
@@ -73,11 +85,9 @@ func main() {
 		}
 	}
 
-	// Health check with provider status
+	// Health check route with HEAD support
 	router.GET("/health", func(c *gin.Context) {
 		status := "ok"
-
-		// Quick provider test
 		testCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -93,6 +103,9 @@ func main() {
 			"providers": "NVIDIA NIM (primary) + OpenRouter (fallback)",
 		})
 	})
+	router.HEAD("/health", func(c *gin.Context) {
+		c.Status(200)
+	})
 
 	// Root endpoint
 	router.GET("/", func(c *gin.Context) {
@@ -102,7 +115,11 @@ func main() {
 			"features": "Dual-provider LLM with failover + Structured logging",
 		})
 	})
+	router.HEAD("/", func(c *gin.Context) {
+		c.Status(200)
+	})
 
+	// Startup logs
 	utils.Info("Server starting on port %s", cfg.Port)
 	utils.Info("Primary provider: NVIDIA NIM (%s)", cfg.NvidiaModel)
 	if cfg.OpenRouterKey != "" {
@@ -110,6 +127,7 @@ func main() {
 	}
 	utils.Info("Allowed origins: %v", cfg.AllowedOrigins)
 
+	// Start server
 	if err := router.Run(":" + cfg.Port); err != nil {
 		utils.Fatal("Failed to start server: %v", err)
 	}
