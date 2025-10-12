@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
-	"chintak-chatbot/config"
-	"chintak-chatbot/handlers"
-	"chintak-chatbot/middleware"
-	"chintak-chatbot/services"
-	"chintak-chatbot/utils"
+	"github.com/chintakjoshi/chintak-chatbot/config"
+	"github.com/chintakjoshi/chintak-chatbot/handlers"
+	"github.com/chintakjoshi/chintak-chatbot/middleware"
+	"github.com/chintakjoshi/chintak-chatbot/services"
+	"github.com/chintakjoshi/chintak-chatbot/utils"
 
 	"github.com/gin-gonic/gin"
 )

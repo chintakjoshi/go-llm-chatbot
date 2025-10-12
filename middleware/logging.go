@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"chintak-chatbot/utils"
 	"time"
+
+	"github.com/chintakjoshi/chintak-chatbot/utils"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,4 +1,4 @@
-module chintak-chatbot
+module github.com/chintakjoshi/chintak-chatbot
 
 go 1.23.0
 

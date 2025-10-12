@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"chintak-chatbot/config"
-	"chintak-chatbot/utils"
+	"github.com/chintakjoshi/chintak-chatbot/config"
+	"github.com/chintakjoshi/chintak-chatbot/utils"
 )
 
 // ChatCompletionRequest represents a chat completion request

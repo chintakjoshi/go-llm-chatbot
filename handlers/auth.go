@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"chintak-chatbot/middleware"
-	"chintak-chatbot/models"
-	"chintak-chatbot/utils"
+	"github.com/chintakjoshi/chintak-chatbot/middleware"
+	"github.com/chintakjoshi/chintak-chatbot/models"
+	"github.com/chintakjoshi/chintak-chatbot/utils"
 
 	"github.com/gin-gonic/gin"
 )

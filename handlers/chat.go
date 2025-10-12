@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"chintak-chatbot/models"
-	"chintak-chatbot/services"
+	"github.com/chintakjoshi/chintak-chatbot/models"
+
+	"github.com/chintakjoshi/chintak-chatbot/services"
 
 	"github.com/gin-gonic/gin"
 )
