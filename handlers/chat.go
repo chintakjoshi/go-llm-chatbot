@@ -2,16 +2,19 @@ package handlers
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/chintakjoshi/chintak-chatbot/models"
-
 	"github.com/chintakjoshi/chintak-chatbot/services"
-
 	"github.com/gin-gonic/gin"
 )
+
+const maxMessageLength = 2000 // prevent prompt overflow / abuse
 
 type ChatHandler struct {
 	llmService *services.LLMService
@@ -32,14 +35,21 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 		return
 	}
 
+	req.Message = strings.TrimSpace(req.Message)
 	if req.Message == "" {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: "Message is required",
 		})
 		return
 	}
+	if len(req.Message) > maxMessageLength {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error: fmt.Sprintf("Message too long (max %d characters)", maxMessageLength),
+		})
+		return
+	}
 
-	// Generate session ID if not provided
+	// Generate session ID if not provided (cryptographically secure)
 	sessionID := req.SessionID
 	if sessionID == "" {
 		sessionID = generateSessionID()
@@ -66,12 +76,10 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 
 	// Validate the response
 	if isValid, reason := services.ValidateResponse(resp.Response, req.Message); !isValid {
-		// Log the validation failure
 		fmt.Printf("Response validation failed: %s\n", reason)
 		fmt.Printf("User message: %s\n", req.Message)
 		fmt.Printf("AI response: %s\n", resp.Response)
 
-		// Return a safe, generic response instead of the potentially hallucinated one
 		resp.Response = "I'm not sure how to answer that based on my portfolio information. Feel free to ask me about my specific projects, skills, or experience listed on my portfolio website."
 	}
 
@@ -88,14 +96,10 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 }
 
 func generateSessionID() string {
-	return time.Now().Format("20060102150405") + "-" + randomString(8)
-}
-
-func randomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		// If crypto/rand fails, fall back to time-based uniqueness
+		return time.Now().Format("20060102150405")
 	}
-	return string(b)
+	return hex.EncodeToString(b)
 }

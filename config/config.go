@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -28,7 +29,7 @@ func Load() *Config {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	return &Config{
+	cfg := &Config{
 		Port:               mustGetEnv("PORT"),
 		NvidiaAPIKey:       mustGetEnv("NVIDIA_API_KEY"),
 		OpenRouterKey:      mustGetEnv("OPENROUTER_API_KEY"),
@@ -40,6 +41,28 @@ func Load() *Config {
 		OpenRouterEndpoint: mustGetEnv("OPENROUTER_ENDPOINT"),
 		NvidiaModel:        mustGetEnv("NVIDIA_MODEL"),
 		OpenRouterModel:    mustGetEnv("OPENROUTER_MODEL"),
+	}
+
+	validateConfig(cfg)
+	return cfg
+}
+
+func validateConfig(cfg *Config) {
+	if len(cfg.JWTSecret) < 32 {
+		log.Fatal("JWT_SECRET must be at least 32 characters long")
+	}
+
+	if len(cfg.AllowedOrigins) == 0 {
+		log.Fatal("ALLOWED_ORIGINS must not be empty")
+	}
+
+	for k, v := range map[string]string{
+		"NVIDIA_ENDPOINT":     cfg.NvidiaEndpoint,
+		"OPENROUTER_ENDPOINT": cfg.OpenRouterEndpoint,
+	} {
+		if _, err := url.ParseRequestURI(v); err != nil {
+			log.Fatalf("Invalid %s: %v", k, err)
+		}
 	}
 }
 
@@ -53,7 +76,15 @@ func mustGetEnv(key string) string {
 
 func mustGetEnvSlice(key string) []string {
 	val := mustGetEnv(key)
-	return strings.Split(val, ",")
+	parts := strings.Split(val, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		s := strings.TrimSpace(p)
+		if s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 func getEnvIntWithDefault(key string, defaultValue int) int {

@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
-	"strings"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/chintakjoshi/chintak-chatbot/config"
@@ -35,16 +37,19 @@ func main() {
 		utils.Fatal("No LLM providers configured. Please set at least one API key (NVIDIA_API_KEY or OPENROUTER_API_KEY)")
 	}
 
-	// Initialize services with the new LLM service
-	utils.Info("Initializing LLM service...")
+	// Load dedicated public API key for client auth
+	publicAPIKey := os.Getenv("PUBLIC_API_KEY")
+	if publicAPIKey == "" {
+		utils.Fatal("PUBLIC_API_KEY not configured")
+	}
+
+	// Initialize services
 	llmService := services.NewLLMService(cfg)
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret)
-
-	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(authMiddleware, cfg.NvidiaAPIKey)
+	authHandler := handlers.NewAuthHandler(authMiddleware, publicAPIKey)
 	chatHandler := handlers.NewChatHandler(llmService)
 
-	// Set Gin mode based on environment
+	// Set Gin mode
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 		utils.Info("Running in release mode")
@@ -56,16 +61,12 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// Set trusted proxies to avoid warnings
+	// Trusted proxies
 	if err := router.SetTrustedProxies(nil); err != nil {
 		utils.Fatal("Failed to set trusted proxies: %v", err)
 	}
 
-	// CORS middleware (can override via env ALLOWED_ORIGINS)
-	envOrigins := os.Getenv("ALLOWED_ORIGINS")
-	if envOrigins != "" {
-		cfg.AllowedOrigins = strings.Split(envOrigins, ",")
-	}
+	// Middleware
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
 	router.Use(middleware.RateLimitMiddleware())
 	router.Use(middleware.LoggingMiddleware())
@@ -73,11 +74,8 @@ func main() {
 	// Routes
 	api := router.Group("/api/v1")
 	{
-		// Public routes
 		api.POST("/auth", authHandler.Authenticate)
-		api.GET("/auth/simple", authHandler.SimpleAuth)
 
-		// Protected routes
 		protected := api.Group("")
 		protected.Use(authMiddleware.ValidateToken())
 		{
@@ -85,7 +83,7 @@ func main() {
 		}
 	}
 
-	// Health check route with HEAD support
+	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		status := "ok"
 		testCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -107,7 +105,7 @@ func main() {
 		c.Status(200)
 	})
 
-	// Root endpoint
+	// Root
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message":  "Chintak's Chatbot API is running",
@@ -127,8 +125,28 @@ func main() {
 	}
 	utils.Info("Allowed origins: %v", cfg.AllowedOrigins)
 
-	// Start server
-	if err := router.Run(":" + cfg.Port); err != nil {
-		utils.Fatal("Failed to start server: %v", err)
+	// Graceful shutdown
+	srv := &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: router,
 	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			utils.Fatal("Failed to start server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	utils.Info("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		utils.Fatal("Server forced to shutdown: %v", err)
+	}
+
+	utils.Info("Server exited gracefully")
 }
