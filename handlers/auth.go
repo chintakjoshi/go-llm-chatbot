@@ -6,7 +6,6 @@ import (
 	"github.com/chintakjoshi/chintak-chatbot/middleware"
 	"github.com/chintakjoshi/chintak-chatbot/models"
 	"github.com/chintakjoshi/chintak-chatbot/utils"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,6 +24,15 @@ func NewAuthHandler(authMiddleware *middleware.AuthMiddleware, validAPIKey strin
 func (h *AuthHandler) Authenticate(c *gin.Context) {
 	clientIP := c.ClientIP()
 
+	// The server must be configured with a validation key; no fallback in prod.
+	if h.validAPIKey == "" {
+		utils.Error("Authentication attempted but VALID_API_KEY is not configured")
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Error: "Server misconfiguration",
+		})
+		return
+	}
+
 	var req models.AuthRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.Warn("Invalid auth request from %s: %v", clientIP, err)
@@ -34,14 +42,8 @@ func (h *AuthHandler) Authenticate(c *gin.Context) {
 		return
 	}
 
-	// For now, we'll use a simple API key validation
-	expectedAPIKey := h.validAPIKey
-	if expectedAPIKey == "" {
-		// Fallback for development
-		expectedAPIKey = "portfolio-chatbot-key"
-	}
-
-	if req.APIKey != expectedAPIKey {
+	// Constant-time comparison would be ideal if available; here we do a simple check.
+	if req.APIKey != h.validAPIKey {
 		utils.Warn("Failed authentication attempt from %s - Invalid API key", clientIP)
 		utils.LogAuthAttempt(clientIP, false)
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
@@ -66,28 +68,5 @@ func (h *AuthHandler) Authenticate(c *gin.Context) {
 	c.JSON(http.StatusOK, models.AuthResponse{
 		Token:     token,
 		ExpiresIn: 86400, // 24 hours in seconds
-	})
-}
-
-func (h *AuthHandler) SimpleAuth(c *gin.Context) {
-	clientIP := c.ClientIP()
-
-	apiKey := "portfolio-chatbot-key" // You can change this
-
-	token, err := h.authMiddleware.GenerateToken(apiKey)
-	if err != nil {
-		utils.Error("Failed to generate simple auth token for %s: %v", clientIP, err)
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
-			Error: "Failed to generate token",
-		})
-		return
-	}
-
-	utils.Info("Successful simple authentication from %s", clientIP)
-	utils.LogAuthAttempt(clientIP, true)
-
-	c.JSON(http.StatusOK, models.AuthResponse{
-		Token:     token,
-		ExpiresIn: 86400,
 	})
 }

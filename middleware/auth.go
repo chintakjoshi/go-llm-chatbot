@@ -9,11 +9,19 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	tokenIssuer   = "chintak-chatbot"
+	tokenAudience = "chatbot-users"
+)
+
 type AuthMiddleware struct {
 	jwtSecret string
 }
 
 func NewAuthMiddleware(jwtSecret string) *AuthMiddleware {
+	if len(jwtSecret) < 32 {
+		panic("JWT_SECRET must be at least 32 characters long")
+	}
 	return &AuthMiddleware{
 		jwtSecret: jwtSecret,
 	}
@@ -33,6 +41,8 @@ func (a *AuthMiddleware) GenerateToken(apiKey string) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    tokenIssuer,
+			Audience:  []string{tokenAudience},
 		},
 	}
 
@@ -66,11 +76,30 @@ func (a *AuthMiddleware) ValidateToken() gin.HandlerFunc {
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(a.jwtSecret), nil
 		})
-
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid or expired token",
 			})
+			c.Abort()
+			return
+		}
+
+		// Validate issuer and audience to prevent cross-env replay
+		if claims.Issuer != tokenIssuer {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token issuer"})
+			c.Abort()
+			return
+		}
+
+		foundAudience := false
+		for _, aud := range claims.Audience {
+			if aud == tokenAudience {
+				foundAudience = true
+				break
+			}
+		}
+		if !foundAudience {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token audience"})
 			c.Abort()
 			return
 		}
