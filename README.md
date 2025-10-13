@@ -1,5 +1,5 @@
 
-# Chintak's Portfolio Chatbot - Configuration & Testing Guide
+# Chintak's Chatbot - Configuration & Testing Guide
 
 ## 📋 Project Overview
 This project consists of two main components:
@@ -22,10 +22,14 @@ Create a `.env` file in the `chatbot-backend/` directory:
 ```env
 # Server Configuration
 PORT=8080
+GIN_MODE=release // comment this if in dev env
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
-ALLOWED_ORIGINS=https://chintakjoshi.github.io,http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000 // adjust according to your client url
 RATE_LIMIT=10
 RATE_LIMIT_WINDOW=60
+
+# Public API Key (used by your frontend to authenticate)
+PUBLIC_API_KEY=your-frontend-access-key-xyz123
 
 # LLM Providers
 NVIDIA_API_KEY=your-nvidia-nim-api-key-here
@@ -56,6 +60,11 @@ LOG_LEVEL=INFO
   - Create an account
   - Generate an API key
   - Copy the key to `OPENROUTER_API_KEY`
+
+### Providing Knowledge to the LLM
+
+- **Navigate to `services/knowledge.go`**:
+  - Update your personal details, including projects, skills, and contact information.
 
 ### Backend Setup & Running
 
@@ -109,7 +118,7 @@ Create a `.env` file in your React project root:
 
 ```env
 REACT_APP_CHATBOT_API_URL=http://localhost:8080/api/v1
-REACT_APP_CHATBOT_API_KEY=portfolio-chatbot-key
+REACT_APP_CHATBOT_API_KEY=portfolio-chatbot-key // this should be same as (PUBLIC_API_KEY) backend service
 ```
 
 **Note**: For production deployment on GitHub Pages, update the API URL to your deployed backend.
@@ -134,24 +143,9 @@ npm run deploy
 
 ## 🧪 Testing the System
 
-1. **Authentication Test**
+1. **Chat Endpoint Test**
 
 ```bash
-# Test simple authentication
-curl http://localhost:8080/api/v1/auth/simple
-
-# Expected response:
-# {
-#   "token": "eyJhbGciOiJIUzI1NiIs...",
-#   "expires_in": 86400
-# }
-```
-
-2. **Chat Endpoint Test**
-
-```bash
-# Get authentication token first
-TOKEN=$(curl -s http://localhost:8080/api/v1/auth/simple | jq -r '.token')
 
 # Send chat message
 curl -X POST http://localhost:8080/api/v1/chat   -H "Authorization: Bearer $TOKEN"   -H "Content-Type: application/json"   -d '{
@@ -167,7 +161,7 @@ curl -X POST http://localhost:8080/api/v1/chat   -H "Authorization: Bearer $TOKE
 # }
 ```
 
-3. **Provider Testing**
+2. **Provider Testing**
 
 ```bash
 # Test NVIDIA provider specifically
@@ -177,7 +171,7 @@ curl -X POST http://localhost:8080/api/v1/chat   -H "Authorization: Bearer $TOKE
 tail -f logs/backend.log
 ```
 
-4. **Frontend Integration Test**
+3. **Frontend Integration Test**
 - Start both backend and frontend servers
 - Open [http://localhost:3000](http://localhost:3000) in browser
 - Click the chat button in the bottom-right corner
