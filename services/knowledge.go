@@ -20,38 +20,36 @@ type PersonalInfo struct {
 	Achievements []string
 	Skills       map[string][]string
 	Links        map[string]string
-	ContactInfo  string
 }
 
 // GetPersonalInfo returns structured personal information
 func GetPersonalInfo() PersonalInfo {
 	return PersonalInfo{
 		Name:        "Chintak Joshi",
-		Title:       "Full-Stack Developer",
-		Experience:  "4+ years of experience creating and designing highly scalable, reliable solutions",
-		CurrentRole: "Contractor at United Rentals",
+		Title:       "Full-Stack Engineer",
+		Experience:  "4+ years of experience building and designing highly scalable, reliable services",
+		CurrentRole: "United Rentals",
 		Education: []string{
 			"Saint Louis University - Master of Science in Computer Science",
 			"Gujarat Technological University - Bachelor's of Engineering in Information Technology",
 		},
 		Achievements: []string{
 			"Proud member of Open Source with SLU, where I led open-source projects across various stacks",
-			"Selected for and participated in prestigious national workshops like the IIT Hackathon and Computer Vision",
-			"Participated in the Microsoft AI Challenge and successfully completed an introductory course on AI",
+			"Oracle Cloud Certified in OCI Developer Professional, Application Integration Professional",
+			"Oracle Cloud Certified AI Foundations, Fusion AI Agent Studio Foundations, Data Platform Foundations",
 		},
 		Skills: map[string][]string{
-			"Languages":      {"Java", "Python", "JavaScript", "TypeScript", "PHP", "Shell Scripting"},
-			"Frameworks":     {"ReactJS", "Spring Boot", "FastAPI", "NodeJS", "Flask", "Django"},
-			"AI/ML":          {"TensorFlow", "PyTorch", "Scikit-learn", "Keras", "Pandas", "OpenCV", "Tesseract", "MCP", "LangChain"},
-			"Databases":      {"MySQL", "PostgreSQL", "MongoDB", "DynamoDB"},
-			"DevOps & Cloud": {"AWS (EC2, S3, RDS, Lambda)", "Elastic", "Docker", "Git", "Jenkins", "Terraform", "CircleCI", "Jira"},
+			"Languages":      {"Python", "JavaScript", "TypeScript", "Java", "Go", "PHP", "HTML", "CSS", "Shell scripting"},
+			"Frameworks":     {"React", "Next.js", "Node.js", "Django", "FastAPI", "Flask", "Spring Boot", "Gin"},
+			"AI/ML":          {"TensorFlow", "PyTorch", "scikit-learn", "Keras", "Pandas", "OpenCV", "AWS Textract", "MCP", "LangChain", "Weaviate", "Pinecone"},
+			"Databases":      {"MySQL", "PostgreSQL", "MongoDB", "DynamoDB", "Vector databases"},
+			"DevOps & Cloud": {"AWS (EC2, S3, RDS, Lambda)", "Bazel", "Helm", "Argo CD", "Docker", "Git", "Jenkins", "Terraform", "Kubernetes"},
 		},
 		Links: map[string]string{
 			"LinkedIn":  "https://www.linkedin.com/in/chintakjoshi",
 			"GitHub":    "https://github.com/chintakjoshi",
 			"Portfolio": "https://chintakjoshi.github.io/chintakjoshi/",
 		},
-		ContactInfo: "To reach out to me, please fill out the contact form on my portfolio. I will reply as soon as possible. Thank you!",
 	}
 }
 
@@ -61,7 +59,7 @@ func GetProjects() []Project {
 		{
 			Name:         "iSpraak",
 			Description:  "Speech Automation Tool designed to automate speech evaluation of language learners and provide instantaneous corrective feedback.",
-			Technologies: []string{"PHP", "ReactJS", "AWS TTS", "Google Auth2.0", "Tailwind", "Docker", "AWS", "S3", "EC2"},
+			Technologies: []string{"PHP", "React", "Amazon Polly (AWS TTS)", "Google OAuth 2.0", "Tailwind CSS", "Docker", "AWS", "S3", "EC2"},
 			Features: []string{
 				"Automated speech evaluation",
 				"Instant corrective feedback",
@@ -76,7 +74,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Garbage Collector Ball in Space Game",
 			Description:  "3D interactive game where players control a sphere navigating through a galactic environment to collect space debris.",
-			Technologies: []string{"ThreeJS", "WebGL"},
+			Technologies: []string{"Three.js", "WebGL"},
 			Features: []string{
 				"3D interactive environment",
 				"Space debris collection mechanics",
@@ -91,7 +89,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Token-based Authentication App",
 			Description:  "Authentication application supporting token-based authentication and email verification by OTP.",
-			Technologies: []string{"ReactJS", "Spring Boot", "PostgreSQL", "Docker", "Java", "TypeScript"},
+			Technologies: []string{"React", "Spring Boot", "PostgreSQL", "Docker", "Java", "TypeScript"},
 			Features: []string{
 				"Token-based authentication",
 				"Email verification via OTP",
@@ -105,7 +103,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Transformative Workforce Academy",
 			Description:  "Web application to help justice-involved job seekers and second-chance employees find employment opportunities.",
-			Technologies: []string{"ReactJS", "CORS", "NodeJS", "ExpressJS", "PostgreSQL", "Docker"},
+			Technologies: []string{"React", "Node.js", "Express.js", "PostgreSQL", "Docker"},
 			Features: []string{
 				"Hiring platform for justice-involved talent",
 				"Promotes self-sufficiency and public safety",
@@ -119,7 +117,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Online Grocery Store for SLU",
 			Description:  "Team lead for project managing grocery stock and facilitating online orders for Saint Louis University store.",
-			Technologies: []string{"ReactJS", "CORS", "NodeJS", "ExpressJS", "PostgreSQL", "Docker"},
+			Technologies: []string{"React", "Node.js", "Express.js", "PostgreSQL", "Docker"},
 			Features: []string{
 				"Grocery stock management",
 				"Online ordering system",
@@ -147,7 +145,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Autonomous Research Assistant for Scientific Literature",
 			Description:  "Multi-agent system to scan and summarize scientific papers from arXiv and PubMed in real time.",
-			Technologies: []string{"ReactJS", "Flask", "FastAPI", "MCP", "LangChain", "Pinecone"},
+			Technologies: []string{"React", "Flask", "FastAPI", "MCP", "LangChain", "Pinecone"},
 			Features: []string{
 				"Real-time paper scanning from arXiv and PubMed",
 				"Multi-agent system with planner-executor framework",
@@ -161,7 +159,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Warfarin Dose Prediction System",
 			Description:  "Machine learning system to predict Warfarin dosage using 15+ features, deployed to Gradio via Hugging Face.",
-			Technologies: []string{"ReactJS", "Flask", "Scikit-learn", "Keras", "TensorFlow", "Pandas", "NumPy", "Gradio", "Hugging Face"},
+			Technologies: []string{"React", "Flask", "scikit-learn", "Keras", "TensorFlow", "Pandas", "NumPy", "Gradio", "Hugging Face"},
 			Features: []string{
 				"Warfarin dose prediction using 15+ features",
 				"Multiple ML models with 5-fold cross-validation",
@@ -172,7 +170,7 @@ func GetProjects() []Project {
 		{
 			Name:         "Chatbot using OpenRouter LLM",
 			Description:  "Chatbot application leveraging OpenRouter's LLM model's to provide context-aware responses based on structured personal knowledge.",
-			Technologies: []string{"ReactJS", "Gin", "Go", "OpenRouter API", "Docker"},
+			Technologies: []string{"React", "Gin", "Go", "OpenRouter API", "Docker"},
 			Features: []string{
 				"Context-aware responses using structured knowledge",
 				"Integration with OpenRouter's LLM models",

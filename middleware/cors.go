@@ -1,25 +1,27 @@
 package middleware
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CORSMiddleware(allowedOrigins []string) gin.HandlerFunc {
+	allowed := make(map[string]struct{}, len(allowedOrigins))
+	for _, candidate := range allowedOrigins {
+		if normalized, ok := normalizeOrigin(candidate); ok {
+			allowed[normalized] = struct{}{}
+		}
+	}
+
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 
-		// Allow requests with no Origin (like mobile apps or curl requests)
-		if origin == "" {
-			c.Header("Access-Control-Allow-Origin", "*")
-		} else {
-			// Check if origin is allowed
-			for _, allowedOrigin := range allowedOrigins {
-				if strings.HasPrefix(origin, allowedOrigin) {
-					c.Header("Access-Control-Allow-Origin", origin)
-					break
-				}
+		if normalizedOrigin, ok := normalizeOrigin(origin); ok {
+			if _, exists := allowed[normalizedOrigin]; exists {
+				c.Header("Access-Control-Allow-Origin", origin)
+				c.Header("Vary", "Origin")
 			}
 		}
 
@@ -34,4 +36,19 @@ func CORSMiddleware(allowedOrigins []string) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func normalizeOrigin(origin string) (string, bool) {
+	parsed, err := url.Parse(strings.TrimSpace(origin))
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return "", false
+	}
+	if parsed.Path != "" && parsed.Path != "/" {
+		return "", false
+	}
+	if parsed.RawQuery != "" || parsed.Fragment != "" || parsed.User != nil {
+		return "", false
+	}
+
+	return strings.ToLower(parsed.Scheme) + "://" + strings.ToLower(parsed.Host), true
 }

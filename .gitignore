@@ -17,8 +17,8 @@ coverage.*
 *.coverprofile
 profile.cov
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# Dependency directories
+vendor/
 
 # Go workspace file
 go.work
@@ -34,3 +34,5 @@ go.work.sum
 chatbot-server.exe
 logs/
 logs/backend.log
+
+chatbot-server
