@@ -68,7 +68,7 @@ func main() {
 
 	// Middleware
 	router.Use(middleware.CORSMiddleware(cfg.AllowedOrigins))
-	router.Use(middleware.RateLimitMiddleware())
+	router.Use(middleware.RateLimitMiddleware(cfg.RateLimit, cfg.RateLimitWindow))
 	router.Use(middleware.LoggingMiddleware())
 
 	// Routes

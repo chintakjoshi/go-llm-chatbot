@@ -55,6 +55,12 @@ func validateConfig(cfg *Config) {
 	if len(cfg.AllowedOrigins) == 0 {
 		log.Fatal("ALLOWED_ORIGINS must not be empty")
 	}
+	if cfg.RateLimit <= 0 {
+		log.Fatal("RATE_LIMIT must be greater than 0")
+	}
+	if cfg.RateLimitWindow <= 0 {
+		log.Fatal("RATE_LIMIT_WINDOW must be greater than 0")
+	}
 
 	for k, v := range map[string]string{
 		"NVIDIA_ENDPOINT":     cfg.NvidiaEndpoint,
