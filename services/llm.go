@@ -12,8 +12,10 @@ import (
 
 // ChatCompletionRequest represents a chat completion request
 type ChatCompletionRequest struct {
-	Message   string
-	SessionID string
+	Message      string
+	SessionID    string
+	SystemPrompt string
+	UserPrompt   string
 }
 
 // ChatCompletionResponse represents a chat completion response

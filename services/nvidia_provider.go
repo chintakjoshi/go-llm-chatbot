@@ -33,8 +33,15 @@ func (n *NvidiaProvider) GetName() string {
 }
 
 func (n *NvidiaProvider) GetChatCompletion(ctx context.Context, req ChatCompletionRequest) (*ChatCompletionResponse, error) {
-	systemPrompt := GetContextPrompt()
-	enhancedMessage := EnhanceUserMessage(req.Message)
+	systemPrompt := req.SystemPrompt
+	if systemPrompt == "" {
+		systemPrompt = GetContextPrompt()
+	}
+
+	enhancedMessage := req.UserPrompt
+	if enhancedMessage == "" {
+		enhancedMessage = EnhanceUserMessage(req.Message)
+	}
 
 	messages := []Message{
 		{
