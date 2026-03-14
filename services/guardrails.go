@@ -5,25 +5,46 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
+	"time"
 )
 
 const (
-	GreetingResponse      = "Hello, ask me about Chintak's projects, skills, or experience."
-	PortfolioOnlyResponse = "I can only answer questions about Chintak Joshi's portfolio. Ask about his projects, skills, experience, education, achievements, or links listed there."
+	GreetingResponse       = "Hello, ask me about Chintak's projects, skills, or experience."
+	AcknowledgmentResponse = "Thanks. Ask me about another project, skill, or part of Chintak's experience."
+	PortfolioOnlyResponse  = "I can only answer questions about Chintak Joshi's portfolio. Ask about his projects, skills, experience, education, achievements, or links listed there."
 )
 
 var (
 	wordPattern       = regexp.MustCompile(`[a-z0-9]+`)
 	arithmeticPattern = regexp.MustCompile(`\d+\s*[\+\-\*/]\s*\d+`)
+	canonicalPattern  = regexp.MustCompile(`[^a-z0-9]+`)
 )
 
 type GuardrailDecision struct {
-	DirectResponse string
-	SystemPrompt   string
-	UserPrompt     string
+	DirectResponse   string
+	SystemPrompt     string
+	UserPrompt       string
+	KnowledgeContext string
 }
 
+const sessionContextTTL = 30 * time.Minute
+
+type sessionContext struct {
+	knowledgeContext string
+	updatedAt        time.Time
+}
+
+var (
+	sessionContextMu    sync.RWMutex
+	sessionContextStore = make(map[string]sessionContext)
+)
+
 func ApplyGuardrails(userMessage string) GuardrailDecision {
+	return ApplyGuardrailsWithSession("", userMessage)
+}
+
+func ApplyGuardrailsWithSession(sessionID, userMessage string) GuardrailDecision {
 	message := normalizeForMatching(userMessage)
 	if message == "" {
 		return GuardrailDecision{DirectResponse: PortfolioOnlyResponse}
@@ -33,20 +54,36 @@ func ApplyGuardrails(userMessage string) GuardrailDecision {
 		return GuardrailDecision{DirectResponse: GreetingResponse}
 	}
 
+	if isAcknowledgmentMessage(message) {
+		return GuardrailDecision{DirectResponse: AcknowledgmentResponse}
+	}
+
 	if isPromptInjectionAttempt(message) {
 		return GuardrailDecision{DirectResponse: PortfolioOnlyResponse}
 	}
 
 	intents := detectIntents(message)
+	if isFollowUpMessage(message) {
+		context, ok := getSessionContext(sessionID)
+		if ok && !isUnsupportedTask(message, intents) {
+			return rememberDecision(sessionID, GuardrailDecision{
+				SystemPrompt:     GetScopedContextPrompt(context),
+				UserPrompt:       EnhanceFollowUpUserMessage(userMessage),
+				KnowledgeContext: context,
+			})
+		}
+	}
+
 	context, allow := buildScopedKnowledgeContext(message, intents)
 	if !allow || isUnsupportedTask(message, intents) {
 		return GuardrailDecision{DirectResponse: PortfolioOnlyResponse}
 	}
 
-	return GuardrailDecision{
-		SystemPrompt: GetScopedContextPrompt(context),
-		UserPrompt:   EnhanceUserMessage(userMessage),
-	}
+	return rememberDecision(sessionID, GuardrailDecision{
+		SystemPrompt:     GetScopedContextPrompt(context),
+		UserPrompt:       EnhanceUserMessage(userMessage),
+		KnowledgeContext: context,
+	})
 }
 
 func buildScopedKnowledgeContext(message string, intents map[string]bool) (string, bool) {
@@ -243,7 +280,58 @@ func isGreetingMessage(message string) bool {
 		"hi", "hello", "hey", "good morning", "good afternoon", "good evening",
 	}
 
-	return slices.Contains(greetings, message)
+	return slices.Contains(greetings, canonicalMessage(message))
+}
+
+func isAcknowledgmentMessage(message string) bool {
+	acknowledgments := []string{
+		"thanks",
+		"thank you",
+		"looks good",
+		"looks great",
+		"sounds good",
+		"impressive",
+		"nice",
+		"cool",
+		"awesome",
+		"great",
+		"ok",
+		"great work",
+		"well done",
+		"nice",
+		"good job",
+		"awesome",
+		"fantastic",
+		"amazing",
+		"excellent",
+		"wonderful",
+		"superb",
+		"brilliant",
+		"outstanding",
+		"fine",
+		"acceptable",
+	}
+
+	return slices.Contains(acknowledgments, canonicalMessage(message))
+}
+
+func isFollowUpMessage(message string) bool {
+	return containsAny(message, []string{
+		"tell me more",
+		"tell me in detail",
+		"can you tell me in detail",
+		"more detail",
+		"more details",
+		"in detail",
+		"in more detail",
+		"elaborate",
+		"expand on that",
+		"explain more",
+		"more about that",
+		"more about it",
+		"what about that",
+		"what about it",
+	})
 }
 
 func isPromptInjectionAttempt(message string) bool {
@@ -279,6 +367,12 @@ func isUnsupportedTask(message string, intents map[string]bool) bool {
 
 func normalizeForMatching(message string) string {
 	return strings.TrimSpace(strings.ToLower(message))
+}
+
+func canonicalMessage(message string) string {
+	normalized := normalizeForMatching(message)
+	normalized = canonicalPattern.ReplaceAllString(normalized, " ")
+	return strings.Join(strings.Fields(normalized), " ")
 }
 
 func compactSections(sections []string) []string {
@@ -333,4 +427,45 @@ func isStopWord(token string) bool {
 	}
 
 	return stopWords[token]
+}
+
+func EnhanceFollowUpUserMessage(userMessage string) string {
+	return userMessage + " [STRICT: This is a follow-up to the previously discussed portfolio topic. Use only the provided portfolio information, stay on the same topic, and give more detail only from that information.]"
+}
+
+func rememberDecision(sessionID string, decision GuardrailDecision) GuardrailDecision {
+	if sessionID == "" || decision.KnowledgeContext == "" {
+		return decision
+	}
+
+	sessionContextMu.Lock()
+	sessionContextStore[sessionID] = sessionContext{
+		knowledgeContext: decision.KnowledgeContext,
+		updatedAt:        time.Now(),
+	}
+	sessionContextMu.Unlock()
+
+	return decision
+}
+
+func getSessionContext(sessionID string) (string, bool) {
+	if sessionID == "" {
+		return "", false
+	}
+
+	sessionContextMu.RLock()
+	context, ok := sessionContextStore[sessionID]
+	sessionContextMu.RUnlock()
+	if !ok {
+		return "", false
+	}
+
+	if time.Since(context.updatedAt) > sessionContextTTL {
+		sessionContextMu.Lock()
+		delete(sessionContextStore, sessionID)
+		sessionContextMu.Unlock()
+		return "", false
+	}
+
+	return context.knowledgeContext, true
 }

@@ -59,7 +59,7 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
-	decision := services.ApplyGuardrails(req.Message)
+	decision := services.ApplyGuardrailsWithSession(sessionID, req.Message)
 	if decision.DirectResponse != "" {
 		c.JSON(http.StatusOK, models.ChatResponse{
 			Response:  decision.DirectResponse,
