@@ -59,10 +59,22 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
+	decision := services.ApplyGuardrails(req.Message)
+	if decision.DirectResponse != "" {
+		c.JSON(http.StatusOK, models.ChatResponse{
+			Response:  decision.DirectResponse,
+			SessionID: sessionID,
+			Timestamp: time.Now().Unix(),
+		})
+		return
+	}
+
 	// Get response from LLM service
 	llmReq := services.ChatCompletionRequest{
-		Message:   req.Message,
-		SessionID: sessionID,
+		Message:      req.Message,
+		SessionID:    sessionID,
+		SystemPrompt: decision.SystemPrompt,
+		UserPrompt:   decision.UserPrompt,
 	}
 
 	resp, err := h.llmService.GetChatCompletion(ctx, llmReq)
@@ -80,12 +92,12 @@ func (h *ChatHandler) Chat(c *gin.Context) {
 		fmt.Printf("User message: %s\n", req.Message)
 		fmt.Printf("AI response: %s\n", resp.Response)
 
-		resp.Response = "I'm not sure how to answer that based on my portfolio information. Feel free to ask me about my specific projects, skills, or experience listed on my portfolio website."
+		resp.Response = services.PortfolioOnlyResponse
 	}
 
 	// Simple validation as a fallback
 	if !services.SimpleResponseValidation(resp.Response) {
-		resp.Response = "I'd be happy to discuss my projects and experience. What would you like to know about my work?"
+		resp.Response = services.PortfolioOnlyResponse
 	}
 
 	c.JSON(http.StatusOK, models.ChatResponse{
