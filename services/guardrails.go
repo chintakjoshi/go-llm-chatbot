@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"regexp"
 	"slices"
 	"strings"
@@ -9,11 +10,29 @@ import (
 	"time"
 )
 
-const (
-	GreetingResponse       = "Hello, ask me about Chintak's projects, skills, or experience."
-	AcknowledgmentResponse = "Thanks. Ask me about another project, skill, or part of Chintak's experience."
-	PortfolioOnlyResponse  = "I can only answer questions about Chintak Joshi's portfolio. Ask about his projects, skills, experience, education, achievements, or links listed there."
-)
+const PortfolioOnlyResponse = "I can only answer questions about Chintak Joshi's portfolio. Ask about his projects, skills, experience, education, achievements, or links listed there."
+
+var greetingResponses = []string{
+	"Hey! What would you like to know about me?",
+	"Hi there! Feel free to ask about my projects, skills, or anything on my portfolio.",
+	"Hey, good to see you here. What are you curious about?",
+	"Hello! Ask away, I'm an open book. Well, an open portfolio at least.",
+}
+
+var acknowledgmentResponses = []string{
+	"Glad that helped! Anything else you want to know?",
+	"Thanks! Got more questions? I'm not going anywhere.",
+	"Appreciate it! Feel free to ask about another project or skill.",
+	"Cheers! What else can I tell you about?",
+}
+
+func randomGreeting() string {
+	return greetingResponses[rand.IntN(len(greetingResponses))]
+}
+
+func randomAcknowledgment() string {
+	return acknowledgmentResponses[rand.IntN(len(acknowledgmentResponses))]
+}
 
 var (
 	wordPattern       = regexp.MustCompile(`[a-z0-9]+`)
@@ -51,11 +70,11 @@ func ApplyGuardrailsWithSession(sessionID, userMessage string) GuardrailDecision
 	}
 
 	if isGreetingMessage(message) {
-		return GuardrailDecision{DirectResponse: GreetingResponse}
+		return GuardrailDecision{DirectResponse: randomGreeting()}
 	}
 
 	if isAcknowledgmentMessage(message) {
-		return GuardrailDecision{DirectResponse: AcknowledgmentResponse}
+		return GuardrailDecision{DirectResponse: randomAcknowledgment()}
 	}
 
 	if isPromptInjectionAttempt(message) {

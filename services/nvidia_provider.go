@@ -58,8 +58,8 @@ func (n *NvidiaProvider) GetChatCompletion(ctx context.Context, req ChatCompleti
 		Model:       n.model,
 		Messages:    messages,
 		MaxTokens:   5000,
-		Temperature: 0.3,
-		TopP:        0.7,
+		Temperature: 0.6,
+		TopP:        0.85,
 		Stream:      false,
 	}
 
