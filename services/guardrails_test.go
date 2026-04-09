@@ -1,6 +1,7 @@
 package services
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -95,7 +96,7 @@ func TestApplyGuardrailsHandlesGreetingWithoutLLM(t *testing.T) {
 	t.Parallel()
 
 	decision := ApplyGuardrails("hello")
-	if decision.DirectResponse != GreetingResponse {
+	if !slices.Contains(greetingResponses, decision.DirectResponse) {
 		t.Fatalf("expected greeting response, got %+v", decision)
 	}
 }
@@ -130,7 +131,7 @@ func TestApplyGuardrailsHandlesAcknowledgmentsWithoutLLM(t *testing.T) {
 			t.Parallel()
 
 			decision := ApplyGuardrails(input)
-			if decision.DirectResponse != AcknowledgmentResponse {
+			if !slices.Contains(acknowledgmentResponses, decision.DirectResponse) {
 				t.Fatalf("expected acknowledgment response for %q, got %+v", input, decision)
 			}
 		})
